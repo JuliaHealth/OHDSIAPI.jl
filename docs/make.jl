@@ -3,7 +3,7 @@ using Documenter
 
 makedocs(;
     modules = [OHDSIAPI],
-    authors = "Jacob Zelko (aka TheCedarPrince) <jacobszelko@gmail.com> and contributors",
+    authors = "Jacob Zelko (aka TheCedarPrince) <jacobszelko@gmail.com>, Varshini Chinta <varshini.chinta@gmail.com>, and contributors",
     repo = "https://github.com/JuliaHealth/OHDSIAPI.jl/blob/{commit}{path}#L{line}",
     sitename = "OHDSIAPI.jl",
     format = Documenter.HTML(;
@@ -11,7 +11,7 @@ makedocs(;
         canonical = "https://JuliaHealth.github.io/OHDSIAPI.jl",
         assets = String[],
         edit_link = "dev",
-	footer = "Created by [Jacob Zelko](https://jacobzelko.com) & [Georgia Tech Research Institute](https://www.gtri.gatech.edu). [License](https://github.com/JuliaHealth/OHDSIAPI.jl/blob/main/LICENSE)"
+	footer = "Created by Varshini Chinta, [Jacob Zelko](https://jacobzelko.com), & [Georgia Tech Research Institute](https://www.gtri.gatech.edu). [License](https://github.com/JuliaHealth/OHDSIAPI.jl/blob/main/LICENSE)"
     ),
     pages = [
         "Home" => "index.md"
