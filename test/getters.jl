@@ -6,7 +6,7 @@ import JSON3
     #test that json data without concept name returns "NA"
     dict1 = Dict("param1" => 1, "param2" => 2, "dict" => Dict("d1"=>1.,"d2"=>1.,"d3"=>1.))
     json_invalid = JSON.json(dict1)
-    concept_name_invalid = get_concept_name(invalid_data)
+    concept_name_invalid = get_concept_name(json_invalid)
     @test concept_name_invalid == "NA"
 
     #test for json data with concept name
@@ -23,11 +23,11 @@ end
 
     #test if function accepts string id 
     string_id = "8507"
-    @test !(get_atlas_concept(string_id) == "NA")
+    @test (get_atlas_concept(string_id) != "NA")
 
     #test if function accepts int id 
 
     int_id = 8507
-    @test !(get_atlas_concept(int_id) == "NA")
+    @test (get_atlas_concept(int_id) != "NA")
 
 end

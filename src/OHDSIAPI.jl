@@ -1,9 +1,11 @@
 module OHDSIAPI
 
-
 # Write your package code here.
 
 module ATLAS
+
+using HTTP 
+using JSON3 
 
 """
 
@@ -47,7 +49,6 @@ function get_atlas_concept(
                 ),
             ],
         )
-
         return JSON3.write(obj)
     catch
         return "NA"
@@ -75,4 +76,7 @@ function get_concept_name(json)
     end
 end
 
+export get_atlas_concept, get_concept_name 
+
+end
 end

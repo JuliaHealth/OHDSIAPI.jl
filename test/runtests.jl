@@ -1,4 +1,4 @@
-using OHDSIAPI
+using OHDSIAPI.ATLAS
 using Test
 
 @testset "OHDSIAPI.jl" begin
