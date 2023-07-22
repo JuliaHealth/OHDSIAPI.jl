@@ -128,7 +128,7 @@ function get_concept_name(json)
     end
 end
 
-export get_atlas_concept, get_concept_name 
+export get_atlas_concept, get_concept_name, get_atlas_conceptset
 
 end
 end
