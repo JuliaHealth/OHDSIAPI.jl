@@ -31,3 +31,16 @@ end
     @test (get_atlas_concept(int_id) != "NA")
 
 end
+
+@testset "get_atlas_conceptset tests" begin
+
+    #test if function accepts string id 
+    string_id = "1874094"
+    @test (get_atlas_conceptset(string_id) != "NA")
+
+    #test if function accepts int id 
+
+    int_id = 1874094
+    @test (get_atlas_conceptset(int_id) != "NA")
+
+end

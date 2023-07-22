@@ -56,6 +56,58 @@ function get_atlas_concept(
 
 end
 
+"""
+
+get_atlas_conceptset(
+    id::Int;
+    isExcluded::Bool = false,
+    includeDescendants::Bool = true,
+    includeMapped::Bool = true
+)
+
+Takes a valid OMOP Concept ID and returns vocabulary concept data.
+
+# Arguments
+
+- `id::Int` - valid OMOP Concept ID
+- `isExcluded::Bool` - Exclude this concept (and any of its descendants if selected) from the concept set
+- `includeDescendants::Bool` - Consider not only this concept, but also all of its descendants
+- `includeMapped::Bool` - Allow to search for non-standard concepts
+
+
+# Returns
+- `obj::JSON3.Object` - results in a JSON3 object representing the ATLAS conceptset
+
+"""
+
+function get_atlas_conceptset(
+    id::String;
+    isExcluded::Bool=false,
+    includeDescendants::Bool=true,
+    includeMapped::Bool=true
+)
+    try
+        path = "https://atlas-demo.ohdsi.org/WebAPI/conceptset/" * id * "/expression" 
+        conceptList = HTTP.get(path) |> x -> String(x.body) |> JSON3.read
+        obj = Dict(
+            "items" => [conceptList]
+        )
+        return JSON3.write(obj)
+    catch
+        return "NA"
+    end
+
+end
+
+function get_atlas_conceptset(
+    id::Int;
+    isExcluded::Bool=false,
+    includeDescendants::Bool=true,
+    includeMapped::Bool=true
+)
+    get_atlas_conceptset(string(id); isExcluded, includeDescendants, includeMapped)
+end
+
 function get_atlas_concept(
     id::Int;
     isExcluded::Bool=false,
@@ -76,7 +128,7 @@ function get_concept_name(json)
     end
 end
 
-export get_atlas_concept, get_concept_name 
+export get_atlas_concept, get_concept_name, get_atlas_conceptset
 
 end
 end
