@@ -128,7 +128,39 @@ function get_concept_name(json)
     end
 end
 
-export get_atlas_concept, get_concept_name, get_atlas_conceptset
+"""
+
+get_atlas_cohort_definition(
+    id::Int
+)
+
+Looks up a cohort definition based on its ID.
+
+# Arguments
+
+- `id::Int` - valid OMOP Concept ID
+
+# Returns
+- `obj::JSON3.Object` - results in a JSON3 object representing the ATLAS cohort definition
+
+"""
+function get_atlas_cohort_definition(
+    id::String;
+)
+    try
+        path = "https://atlas-demo.ohdsi.org/WebAPI/cohortdefinition/" * id
+        conceptList = HTTP.get(path) |> x -> String(x.body) |> JSON3.read
+        obj = Dict(
+            "items" => [conceptList]
+        )
+        return JSON3.write(obj)
+    catch
+        return "NA"
+    end
+
+end
+
+export get_atlas_concept, get_concept_name, get_atlas_conceptset, get_atlas_cohort_definition
 
 end
 end
