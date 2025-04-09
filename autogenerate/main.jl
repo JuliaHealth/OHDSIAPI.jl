@@ -157,3 +157,12 @@ for func in funcs
     println(func_body)
     break
 end
+
+# TODO: Break out functions by HTTP method types
+# TODO: Check POST payload descriptions
+# TODO: Check for other query information per method
+# TODO: Add extended help with output information per function
+# TODO: Break out functions across files per HTTP method type
+# TODO: Create ATLAS submodule where these functions live
+# TODO: Export ATLAS submodule 
+# TODO: Determine testing suite 
