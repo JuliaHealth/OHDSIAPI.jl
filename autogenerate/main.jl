@@ -3,104 +3,13 @@ using Downloads
 using JSON3
 using NodeJS
 
-@kwdef struct FUNCTION_DEF 
-    func_name::String
-    method::String
-    description
-    url::String
-    args
-    output
-end
-
-@kwdef struct ARGUMENT_DEF
-    arg_name::String
-    type
-    description::String
-end
-
-const API_TYPE_DICT = Dict(
-    "number" => Number,
-    "string" => String,
-    "enum" => Enum
-)
-
-STATUS_CODES = 
-"""
-{
-   "httpCode": 200,
-    "comment": "The service call has completed successfully."
-}, {
-   "httpCode": 412,
-    "comment": "Invalid JSON/XML input."
-}, {
-   "httpCode": 500,
-    "comment": "The service call has not succeeded."
-}
-"""
-
-url = "http://webapidoc.ohdsi.org/input/input.js"
-destination = "data/input.js"
-nodejs = nodejs_cmd()
-
-Downloads.download(url, destination)
-
-run(`$nodejs parse_input.js`)
+include("constants.jl")
+include("download.jl")
+include("getters.jl")
 
 ends = JSON3.read("data/endpoints.json");
+ends = ends[Not(findall(x -> x.title == "DO NOT USE", ends)), :];
 
-ends = ends[
-    Not(findall(x -> x.title == "DO NOT USE", ends)),
-    :
-];
-
-function get_func_name(e) 
-    elems = splitpath(replace(e.url, "-" => ""))
-    indxs = findall(x -> occursin("{", x), elems)
-
-    front = elems[Not(indxs)][2:end]
-    front = join(lowercase.(front), "_")
-
-    return lowercase(e.http) * "_" * front
-end
-
-function get_arguments(e)
-    args = []
-    if isempty(e.inputs.PATH)
-        return nothing
-    else
-        for input in e.inputs.PATH
-            type = input.typeValue
-
-            if hasproperty(type, :typeValue)
-                type = type.typeValue
-            else
-                type = type.type
-            end
-
-            arg = ARGUMENT_DEF(
-                arg_name = input.name,
-                type = API_TYPE_DICT[type],
-                description = isnothing(input.comment) ? "" : input.comment
-            )
-            push!(args, arg)
-        end
-
-        return args
-
-    end
-end
-
-function get_output(e)
-    output = []
-    if isempty(e.output)
-        return nothing
-    else
-        return e.output
-    end
-
-end
-
-funcs = []
 for e in ends
     func = FUNCTION_DEF(
         func_name = get_func_name(e),
@@ -108,11 +17,13 @@ for e in ends
         description = isnothing(e.beschrijving) ? e.title : e.beschrijving,
         url = e.url,
         args = get_arguments(e),
+        queries = get_queries(e),
         output = get_output(e)
     )
-    push!(funcs, func)
+    push!(FUNC_DICT[e.http], e)
 end
 
+# TODO: Iterate through each method type via keys first
 for func in funcs
     func_body = """\"\"\""""
 
@@ -154,13 +65,11 @@ for func in funcs
     func_body *= "\nfunction $(func_header[11:end-6])"
     func_body *= """\n\nend"""
 
-    println(func_body)
     break
 end
 
 # TODO: Break out functions by HTTP method types
 # TODO: Check POST payload descriptions
-# TODO: Check for other query information per method
 # TODO: Add extended help with output information per function
 # TODO: Break out functions across files per HTTP method type
 # TODO: Create ATLAS submodule where these functions live
