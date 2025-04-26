@@ -69,3 +69,12 @@ function get_output(e)
     end
 end
 
+function get_body(e)
+    body = e.inputs.BODY
+    if isempty(body)
+        return nothing
+    else
+        return body 
+    end
+end
+
