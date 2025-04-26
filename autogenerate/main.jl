@@ -51,7 +51,15 @@ for func in FUNC_DICT["GET"]
     )
 end
 
-    break
+for m in HTTP_METHODS
+    open("../src/$(lowercase(m)).jl", "w") do f
+        for func in GENERATED_FUNCTIONS[m]
+            write(f, func.docstring |> strip)
+            write(f, "\n")
+            write(f, func.code |> strip)
+            write(f, "\n\n")
+        end
+    end
 end
 
 
