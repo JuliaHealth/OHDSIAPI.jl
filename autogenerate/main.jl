@@ -69,10 +69,11 @@ for func in funcs
     break
 end
 
-# TODO: Break out functions by HTTP method types
+
+# TODO: Write some routine to check for duplicated function names
+# TODO: Figure out how to handle duplicated function names
 # TODO: Check POST payload descriptions
 # TODO: Add extended help with output information per function
-# TODO: Break out functions across files per HTTP method type
 # TODO: Create ATLAS submodule where these functions live
 # TODO: Export ATLAS submodule 
 # TODO: Determine testing suite 
