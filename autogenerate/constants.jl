@@ -5,7 +5,13 @@
     url::String
     args
     queries
+    body
     output
+end
+
+@kwdef struct GENERATED_FUNCTION
+    docstring::String
+    code::String
 end
 
 @kwdef struct ARGUMENT_DEF
@@ -29,6 +35,7 @@ const API_TYPE_DICT = Dict(
 
 const HTTP_METHODS = ["GET", "POST", "DELETE", "PUT"]
 const FUNC_DICT = Dict(m => [] for m in HTTP_METHODS)
+const GENERATED_FUNCTIONS = Dict(m => [] for m in HTTP_METHODS)
 
 STATUS_CODES = 
 """
