@@ -3,9 +3,10 @@ using Downloads
 using JSON3
 using NodeJS
 
-include("constants.jl")
-include("download.jl")
-include("getters.jl")
+includet("constants.jl")
+includet("download.jl")
+includet("function_builders.jl")
+includet("getters.jl")
 
 ends = JSON3.read("data/endpoints.json");
 ends = ends[Not(findall(x -> x.title == "DO NOT USE", ends)), :];
