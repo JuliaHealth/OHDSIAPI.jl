@@ -19,52 +19,37 @@ for e in ends
         url = e.url,
         args = get_arguments(e),
         queries = get_queries(e),
+        body = get_body(e),
         output = get_output(e)
     )
-    push!(FUNC_DICT[e.http], e)
+    push!(FUNC_DICT[e.http], func)
 end
 
 # TODO: Iterate through each method type via keys first
-for func in funcs
-    func_body = """\"\"\""""
-
-    func_header = """\n```julia\n$(func.func_name)("""
-    if !isnothing(func.args)
-        for arg in func.args
-            func_header *= "\n  $(arg.arg_name)::$(arg.type),"
-        end
-        func_header *= "\n)"
-    else
-        func_header *= ")"
-    end
-        
-    func_header *= "\n```\n\n"
-
-    func_body *= func_header
-
-    func_body *= func.description
-
-    if !isnothing(func.args)
-        func_body *= "\n\n# Arguments"
-        for arg in func.args
-            arg_body = """"""
-            arg_body *= "- `$(arg.arg_name)::$(arg.type)` - $(arg.description)"
-            func_body *= "\n\n$(arg_body)"
-        end
-    end
+for func in FUNC_DICT["GET"]
+    docstring = """\"\"\""""
+    docstring *= build_header!(docstring, func)
+    docstring *= func.description
+    docstring = build_arguments!(docstring, func)
 
     if func.method != "DELETE"
         if hasproperty(func.output, :comment) && !isnothing(func.output.comment) && !isempty(func.output.comment)
-            func_body *= "\n\n# Returns"
-            func_body *= "\n\n- $(func.output.comment)"
+            docstring *= "\n\n# Returns"
+            docstring *= "\n\n- $(func.output.comment)"
         end
     end
 
-    func_body *= "\n\n> **NOTE:** For more information on what this function returns, access expanded help by running `help>?$(func.func_name)`."
-
-    func_body *= """\n\"\"\""""
-    func_body *= "\nfunction $(func_header[11:end-6])"
-    func_body *= """\n\nend"""
+    docstring = build_footer!(docstring, func)
+    func_code = """\n\n"""
+    func = build_code!(func_code, func)
+    
+    push!(GENERATED_FUNCTIONS["GET"], 
+        GENERATED_FUNCTION(
+            docstring,
+            func
+        )
+    )
+end
 
     break
 end
