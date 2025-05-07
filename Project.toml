@@ -4,12 +4,18 @@ authors = ["Varshini Chinta <vchinta6@icl.gtri.org> and contributors"]
 version = "0.1.0"
 
 [deps]
+BrokenRecord = "bdd55f5b-6e67-4da1-a080-6086e55655a0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 
 [compat]
+BrokenRecord = "0.1.9"
+Dates = "1.11.0"
 HTTP = "1.10"
 JSON3 = "1.14"
+ProgressMeter = "1.10.4"
 julia = "1.10"
 
 [extras]
