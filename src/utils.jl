@@ -1,14 +1,11 @@
-using HTTP
-using JSON3
-using Dates
-
-function prepare_cohort_directory()
-    path = joinpath(@__DIR__, "..", "data", "cohort_definitions")
+function _prepare_cohort_directory(
+    path::String
+)
     mkpath(path)
     return path
 end
 
-function load_metadata(
+function _load_metadata(
     metadata_path::String,
     metadata_check::Bool
 )
@@ -18,7 +15,7 @@ function load_metadata(
     return Dict{String, Any}()
 end
 
-function write_metadata_entry(
+function _write_metadata_entry(
     metadata::Dict{String, Any},
     id::Int,
     version::Int,
@@ -32,7 +29,7 @@ function write_metadata_entry(
     )
 end
 
-function save_metadata(
+function _save_metadata(
     metadata::Dict{String, Any},
     metadata_path::String
 )
@@ -41,7 +38,7 @@ function save_metadata(
     end
 end
 
-function save_cohort_json(
+function _save_cohort_json(
     id::Int,
     body,
     save_dir::String
@@ -53,7 +50,7 @@ function save_cohort_json(
     return path
 end
 
-function format_timestamp(
+function _format_timestamp(
     ms::Int
 )
     date = Dates.unix2datetime(ms ÷ 1000)
@@ -63,52 +60,66 @@ end
 function get_cohort_definition(
     IDs;
     progress_bar::Bool = true,
-    metadata_check::Bool = true
+    metadata_check::Bool = true,
+    save_dir::String = pwd()
 )
-    save_dir = prepare_cohort_directory()
+    save_dir = _prepare_cohort_directory(save_dir)
     metadata_path = joinpath(save_dir, "metadata.json")
-    metadata = load_metadata(metadata_path, metadata_check)
-    # print(metadata)
+    metadata = _load_metadata(metadata_path, metadata_check)
 
     ids = typeof(IDs) <: Integer ? [IDs] : IDs
     download_paths = String[]
 
+    if progress_bar
+        p = Progress(length(ids); dt=0.5, barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:yellow)
+    end
+
     for id in ids
         try
             existing_info = get(metadata, string(id), nothing)
-            # print(existing_info)
-            
+
             version_resp = get_cohortdefinition_version(id)
+            if version_resp.status != 200
+                @warn "Could not retrieve version info for cohort ID: $id"
+                continue
+            end
             versions = JSON3.read(String(version_resp.body))
-            latest_version = maximum(x -> x["version"], versions)            
-                
+            latest_version = maximum(x -> x["version"], versions)
+
             cohort_resp = get_cohortdefinition(id)
             if cohort_resp.status != 200
                 @warn "Failed to download cohort ID: $id"
                 continue
             end
-            
+
             cohort_json = JSON3.read(String(cohort_resp.body))
-            last_modified = format_timestamp(cohort_json["modifiedDate"])
-            
+            last_modified = _format_timestamp(cohort_json["modifiedDate"])
+
             if metadata_check && existing_info !== nothing && existing_info["lastModified"] == last_modified
-                @info "Skipping cohort ID $id (no changes detected)"
+                @info "Skipping cohort ID $id (no changes detected, up-to-date)"
+                if progress_bar
+                    next!(p)
+                end
                 continue
             end
 
-            path = save_cohort_json(id, cohort_json, save_dir)
+            path = _save_cohort_json(id, cohort_json, save_dir)
+            _write_metadata_entry(metadata, id, latest_version, last_modified)
             push!(download_paths, path)
-            @info "Cohort definition $id downloaded to /data/cohort_definitions/$id.json"
-            if metadata_check
-                write_metadata_entry(metadata, id, latest_version, last_modified)
-            end
+            @info "Cohort definition $id downloaded to $(path)"
+
         catch e
-            @warn "Error downloading cohort ID: $id: $e"
+            @warn "Error processing cohort ID $id: $(e)"
+            continue
+        end
+
+        if progress_bar
+            next!(p)
         end
     end
 
     if metadata_check
-        save_metadata(metadata, metadata_path)
+        _save_metadata(metadata, metadata_path)
     end
 
     return download_paths
