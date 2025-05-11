@@ -12,7 +12,6 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 
 [compat]
 BrokenRecord = "0.1.9"
-Dates = "1.11.0"
 HTTP = "1.10"
 JSON3 = "1.14"
 ProgressMeter = "1.10.4"
