@@ -2,7 +2,7 @@
 
 julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "cf98c8878742e085eebd50b19fe50bb7f5ca87cb"
+project_hash = "e5d77207205e3ca019a633e008d11f4d2139042b"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -234,12 +234,6 @@ version = "2023.12.12"
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
 
-[[deps.OHDSIAPI]]
-deps = ["Dates", "HTTP", "JSON3", "ProgressMeter"]
-path = ".."
-uuid = "43fe992b-71c2-425c-b13e-efb1498069b1"
-version = "0.1.0"
-
 [[deps.OpenSSL]]
 deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
 git-tree-sha1 = "38cb508d080d21dc1128f7fb04f20387ed4c0af4"
@@ -290,12 +284,6 @@ version = "1.4.3"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 version = "1.11.0"
-
-[[deps.ProgressMeter]]
-deps = ["Distributed", "Printf"]
-git-tree-sha1 = "13c5103482a8ed1536a54c08d0e742ae3dca2d42"
-uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
-version = "1.10.4"
 
 [[deps.Random]]
 deps = ["SHA"]
