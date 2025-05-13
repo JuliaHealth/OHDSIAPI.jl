@@ -1,8 +1,3 @@
-using Test
-using BrokenRecord: playback
-import OHDSIAPI: get_cohortdefinition_version, get_cohort_definition
-using JSON3
-
 @testset "get_cohortdefinition_version" begin
     id = 1792865
     @testset "recorded response exists and is valid" begin
