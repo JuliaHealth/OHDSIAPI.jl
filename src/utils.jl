@@ -1,21 +1,22 @@
-function _prepare_cohort_directory(
-    path::String
-)
-    mkpath(path)
-    return path
-end
+"""
 
-function _load_metadata(
-    metadata_path::String,
-    metadata_check::Bool
-)
-    if metadata_check && isfile(metadata_path)
-        return JSON3.read(read(metadata_path, String), Dict{String, Any})
-    end
-    return Dict{String, Any}()
-end
+    _write_metadata_entry!(metadata::Dict{String, Any}, id::Int, version::Int, last_modified::String)
 
-function _write_metadata_entry(
+Adds or updates an entry for a cohort in the metadata dictionary.
+
+# Arguments
+
+- `metadata::Dict{String, Any}` - The metadata dictionary to mutate.
+- `id::Int` - The cohort ID.
+- `version::Int` - The cohort version number.
+- `last_modified::String` - The last modified timestamp for the cohort.
+
+# Returns
+
+Nothing. Mutates the input dictionary in-place.
+
+"""
+function _write_metadata_entry!(
     metadata::Dict{String, Any},
     id::Int,
     version::Int,
@@ -29,6 +30,22 @@ function _write_metadata_entry(
     )
 end
 
+"""
+
+    _save_metadata(metadata::Dict{String, Any}, metadata_path::String)
+
+Saves the metadata dictionary to a JSON file at the specified path.
+
+# Arguments
+
+- `metadata::Dict{String, Any}` - The metadata dictionary to save.
+- `metadata_path::String` - The path to the output JSON file.
+
+# Returns
+
+Nothing. Writes the file as a side effect.
+
+"""
 function _save_metadata(
     metadata::Dict{String, Any},
     metadata_path::String
@@ -38,6 +55,23 @@ function _save_metadata(
     end
 end
 
+"""
+
+    _save_cohort_json(id::Int, body, save_dir::String)
+
+Saves the cohort JSON body to a file named `<id>.json` in the specified directory.
+
+# Arguments
+
+- `id::Int` - The cohort ID (used as the filename).
+- `body` - The JSON content to write.
+- `save_dir::String` - The directory to save the file in.
+
+# Returns
+
+The full path to the saved JSON file as a String.
+
+"""
 function _save_cohort_json(
     id::Int,
     body,
@@ -50,22 +84,43 @@ function _save_cohort_json(
     return path
 end
 
-function _format_timestamp(
-    ms::Int
-)
-    date = Dates.unix2datetime(ms ÷ 1000)
-    return Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
-end
+"""
 
+    get_cohort_definition(IDs; progress_bar::Bool=true, metadata_check::Bool=true, output_dir::String=pwd())
+
+Downloads one or more cohort definitions from the OHDSI WebAPI and saves them as JSON files in the specified directory. Metadata about the downloads is tracked in a `metadata.json` file. If `metadata_check` is enabled, cohorts that are already up-to-date will be skipped.
+
+# Arguments
+
+- `IDs` - A single integer ID or a collection of IDs to download.
+- `progress_bar::Bool` - Whether to display a progress bar (default: true).
+- `metadata_check::Bool` - Whether to check metadata and skip up-to-date cohorts (default: true).
+- `output_dir::String` - Directory to save the cohort JSON files and metadata (default: current directory).
+
+# Returns
+
+A vector of file paths to the downloaded cohort JSON files.
+
+# Examples
+
+```julia-repl
+julia> get_cohort_definition(12345)
+julia> get_cohort_definition([12345, 67890]; output_dir="./cohorts")
+```
+
+"""
 function get_cohort_definition(
     IDs;
     progress_bar::Bool = true,
     metadata_check::Bool = true,
-    save_dir::String = pwd()
+    output_dir::String = pwd()
 )
-    save_dir = _prepare_cohort_directory(save_dir)
-    metadata_path = joinpath(save_dir, "metadata.json")
-    metadata = _load_metadata(metadata_path, metadata_check)
+    metadata_path = joinpath(output_dir, "metadata.json")
+    metadata = if metadata_check && isfile(metadata_path)
+        JSON3.read(read(metadata_path, String), Dict{String, Any})
+    else
+        Dict{String, Any}()
+    end
 
     ids = typeof(IDs) <: Integer ? [IDs] : IDs
     download_paths = String[]
@@ -93,7 +148,9 @@ function get_cohort_definition(
             end
 
             cohort_json = JSON3.read(String(cohort_resp.body))
-            last_modified = _format_timestamp(cohort_json["modifiedDate"])
+            ms = cohort_json["modifiedDate"]
+            date = Dates.unix2datetime(ms ÷ 1000)
+            last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
 
             if metadata_check && existing_info !== nothing && existing_info["lastModified"] == last_modified
                 @info "Skipping cohort ID $id (no changes detected, up-to-date)"
@@ -103,8 +160,8 @@ function get_cohort_definition(
                 continue
             end
 
-            path = _save_cohort_json(id, cohort_json, save_dir)
-            _write_metadata_entry(metadata, id, latest_version, last_modified)
+            path = _save_cohort_json(id, cohort_json, output_dir)
+            _write_metadata_entry!(metadata, id, latest_version, last_modified)
             push!(download_paths, path)
             @info "Cohort definition $id downloaded to $(path)"
 
