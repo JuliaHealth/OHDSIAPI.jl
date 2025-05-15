@@ -88,7 +88,9 @@ end
 
     get_cohort_definition(IDs; progress_bar::Bool=true, metadata_check::Bool=true, output_dir::String=pwd())
 
-Downloads one or more cohort definitions from the OHDSI WebAPI and saves them as JSON files in the specified directory. Metadata about the downloads is tracked in a `metadata.json` file. If `metadata_check` is enabled, cohorts that are already up-to-date will be skipped.
+Downloads one or more cohort definitions from the OHDSI WebAPI and saves them as JSON files 
+in the specified directory. Metadata about the downloads is tracked in a `metadata.json` file. 
+If `metadata_check` is enabled, cohorts that are already up-to-date will be skipped.
 
 # Arguments
 
@@ -104,8 +106,8 @@ A vector of file paths to the downloaded cohort JSON files.
 # Examples
 
 ```julia-repl
-julia> get_cohort_definition(12345)
-julia> get_cohort_definition([12345, 67890]; output_dir="./cohorts")
+julia> get_cohort_definition(1792865)
+julia> get_cohort_definition([1792956, 1790632]; output_dir="./cohorts")
 ```
 
 """
@@ -116,67 +118,92 @@ function get_cohort_definition(
     output_dir::String = pwd()
 )
     metadata_path = joinpath(output_dir, "metadata.json")
-    metadata = if metadata_check && isfile(metadata_path)
-        JSON3.read(read(metadata_path, String), Dict{String, Any})
-    else
+    metadata = (metadata_check && isfile(metadata_path)) ?
+        JSON3.read(read(metadata_path, String), Dict{String, Any}) :
         Dict{String, Any}()
+
+    ids = unique(typeof(IDs) <: Integer ? [IDs] : IDs)
+    download_ids = Int[]
+    skip_ids = Int[]
+
+    # First pass: Decide which cohorts to skip and which to download
+    for id in ids
+        existing_info = get(metadata, string(id), nothing)
+        version_resp = get_cohortdefinition_version(id)
+        if version_resp.status != 200
+            @warn "Could not retrieve version info for cohort ID: $id"
+            continue
+        end
+        versions = JSON3.read(String(version_resp.body))
+        latest_version = maximum(x -> x["version"], versions)
+
+        cohort_resp = get_cohortdefinition(id)
+        if cohort_resp.status != 200
+            @warn "Failed to download cohort ID: $id"
+            continue
+        end
+        cohort_json = JSON3.read(String(cohort_resp.body))
+        ms = cohort_json["modifiedDate"]
+        date = Dates.unix2datetime(ms ÷ 1000)
+        last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
+
+        if metadata_check && existing_info !== nothing && existing_info["lastModified"] == last_modified
+            @info "Skipping cohort ID $id (no changes detected, up-to-date)"
+            skip_ids = push!(skip_ids, id)
+        else
+            push!(download_ids, id)
+        end
     end
 
-    ids = typeof(IDs) <: Integer ? [IDs] : IDs
+    # Progress bar for downloads only
+    p = (progress_bar && !isempty(download_ids)) ?
+    Progress(
+        length(download_ids);
+        dt=0.1,
+        barglyphs=BarGlyphs("[=> ]"),
+        barlen=40,
+        color=:yellow
+    ) :
+    nothing
+    
     download_paths = String[]
 
-    if progress_bar
-        p = Progress(length(ids); dt=0.5, barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:yellow)
-    end
-
-    for id in ids
+    for id in download_ids
         try
-            existing_info = get(metadata, string(id), nothing)
-
-            version_resp = get_cohortdefinition_version(id)
-            if version_resp.status != 200
-                @warn "Could not retrieve version info for cohort ID: $id"
-                continue
-            end
-            versions = JSON3.read(String(version_resp.body))
-            latest_version = maximum(x -> x["version"], versions)
-
             cohort_resp = get_cohortdefinition(id)
-            if cohort_resp.status != 200
-                @warn "Failed to download cohort ID: $id"
-                continue
-            end
-
             cohort_json = JSON3.read(String(cohort_resp.body))
             ms = cohort_json["modifiedDate"]
             date = Dates.unix2datetime(ms ÷ 1000)
             last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
 
-            if metadata_check && existing_info !== nothing && existing_info["lastModified"] == last_modified
-                @info "Skipping cohort ID $id (no changes detected, up-to-date)"
-                if progress_bar
-                    next!(p)
-                end
-                continue
-            end
+            version_resp = get_cohortdefinition_version(id)
+            versions = JSON3.read(String(version_resp.body))
+            latest_version = maximum(x -> x["version"], versions)
 
             path = _save_cohort_json(id, cohort_json, output_dir)
             _write_metadata_entry!(metadata, id, latest_version, last_modified)
             push!(download_paths, path)
-            @info "Cohort definition $id downloaded to $(path)"
 
+            @info "Downloaded cohort $id: $(abspath(path))"
+            if progress_bar
+                next!(p; showvalues=[("Downloaded cohort", "$id")])
+                
+            end
         catch e
-            @warn "Error processing cohort ID $id: $(e)"
+            @warn "Error downloading cohort ID $id: $e"
             continue
-        end
-
-        if progress_bar
-            next!(p)
         end
     end
 
     if metadata_check
         _save_metadata(metadata, metadata_path)
+    end
+
+    if !isempty(download_paths)
+        filenames = join([split(path, r"[\\/]") |> last for path in download_paths], "\n  ")
+        @info "Successfully downloaded the following cohorts:\n  $filenames"
+    else
+        @info "No new cohorts were downloaded."
     end
 
     return download_paths
