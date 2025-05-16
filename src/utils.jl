@@ -228,3 +228,5 @@ function get_cohort_definition(
 
     return download_paths
 end
+
+export get_cohort_definition
