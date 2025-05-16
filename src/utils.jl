@@ -135,7 +135,12 @@ function get_cohort_definition(
             continue
         end
         versions = JSON3.read(String(version_resp.body))
-        latest_version = maximum(x -> x["version"], versions)
+        if isempty(versions)
+            @warn "No versions found for cohort ID: $id"
+            continue
+        else
+            latest_version = maximum(x -> x["version"], versions)
+        end
 
         cohort_resp = get_cohortdefinition(id)
         if cohort_resp.status != 200
@@ -143,9 +148,14 @@ function get_cohort_definition(
             continue
         end
         cohort_json = JSON3.read(String(cohort_resp.body))
-        ms = cohort_json["modifiedDate"]
-        date = Dates.unix2datetime(ms ÷ 1000)
-        last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
+        if haskey(cohort_json, "modifiedDate")
+            ms = cohort_json["modifiedDate"]
+            date = Dates.unix2datetime(ms ÷ 1000)
+            last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
+        else
+            @warn "No modifiedDate found for cohort ID: $id, skipping."
+            continue
+        end
 
         if metadata_check && existing_info !== nothing && existing_info["lastModified"] == last_modified
             @info "Skipping cohort ID $id (no changes detected, up-to-date)"
@@ -172,13 +182,23 @@ function get_cohort_definition(
         try
             cohort_resp = get_cohortdefinition(id)
             cohort_json = JSON3.read(String(cohort_resp.body))
-            ms = cohort_json["modifiedDate"]
-            date = Dates.unix2datetime(ms ÷ 1000)
-            last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
+            if haskey(cohort_json, "modifiedDate")
+                ms = cohort_json["modifiedDate"]
+                date = Dates.unix2datetime(ms ÷ 1000)
+                last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
+            else
+                @warn "No modifiedDate found for cohort ID: $id, skipping."
+                continue
+            end
 
             version_resp = get_cohortdefinition_version(id)
             versions = JSON3.read(String(version_resp.body))
-            latest_version = maximum(x -> x["version"], versions)
+            if isempty(versions)
+                @warn "No versions found for cohort ID: $id during download phase"
+                continue
+            else
+                latest_version = maximum(x -> x["version"], versions)
+            end
 
             path = _save_cohort_json(id, cohort_json, output_dir)
             _write_metadata_entry!(metadata, id, latest_version, last_modified)
