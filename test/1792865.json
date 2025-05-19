@@ -1,0 +1,12 @@
+{
+    "id": 1792865,
+    "name": "Hypertension WT",
+    "createdDate": 1744967097935,
+    "modifiedDate": 1745516859225,
+    "hasWriteAccess": false,
+    "hasReadAccess": false,
+    "tags": [
+    ],
+    "expression": "{\"cdmVersionRange\":\">=5.0.0\",\"PrimaryCriteria\":{\"CriteriaList\":[{\"ConditionOccurrence\":{\"CodesetId\":2}}],\"ObservationWindow\":{\"PriorDays\":0,\"PostDays\":0},\"PrimaryCriteriaLimit\":{\"Type\":\"First\"}},\"AdditionalCriteria\":{\"Type\":\"ALL\",\"CriteriaList\":[],\"DemographicCriteriaList\":[{\"Gender\":[{\"CONCEPT_ID\":8507,\"CONCEPT_NAME\":\"MALE\",\"STANDARD_CONCEPT\":null,\"STANDARD_CONCEPT_CAPTION\":\"Unknown\",\"INVALID_REASON\":null,\"INVALID_REASON_CAPTION\":\"Unknown\",\"CONCEPT_CODE\":\"M\",\"DOMAIN_ID\":\"Gender\",\"VOCABULARY_ID\":\"Gender\",\"CONCEPT_CLASS_ID\":null}]}],\"Groups\":[]},\"ConceptSets\":[{\"id\":1,\"name\":\"hypertention\",\"expression\":{\"items\":[]}},{\"id\":2,\"name\":\"WT - Hypertension\",\"expression\":{\"items\":[{\"concept\":{\"CONCEPT_ID\":320128,\"CONCEPT_NAME\":\"Essential hypertension\",\"STANDARD_CONCEPT\":\"S\",\"STANDARD_CONCEPT_CAPTION\":\"Standard\",\"INVALID_REASON\":\"V\",\"INVALID_REASON_CAPTION\":\"Valid\",\"CONCEPT_CODE\":\"59621000\",\"DOMAIN_ID\":\"Condition\",\"VOCABULARY_ID\":\"SNOMED\",\"CONCEPT_CLASS_ID\":\"Disorder\"},\"isExcluded\":false,\"includeDescendants\":false,\"includeMapped\":false}]}}],\"QualifiedLimit\":{\"Type\":\"First\"},\"ExpressionLimit\":{\"Type\":\"First\"},\"InclusionRules\":[],\"CensoringCriteria\":[],\"CollapseSettings\":{\"CollapseType\":\"ERA\",\"EraPad\":0},\"CensorWindow\":{}}",
+    "expressionType": "SIMPLE_EXPRESSION"
+}
