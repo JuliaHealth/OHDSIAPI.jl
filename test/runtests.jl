@@ -1,5 +1,7 @@
 using JSON3
 using Test
+using ReferenceTests
+using Base: basename
 
 import OHDSIAPI: 
     get_cohortdefinition_version, 

@@ -14,10 +14,12 @@ end
         result = playback(() -> download_cohort_definition(1792865; progress_bar=true, metadata=""), "cohort_definition_1792865.bson")
         if length(result) == 0
             @info "Result was empty - possibly skipped due to metadata check"
-            @test true  
+            @test true
         else
             @test length(result) == 1
-            @test occursin("1792865.json", result[1])
+            content = JSON3.read(read(result[1], String))
+            content_str = JSON3.pretty(JSON3.write(content))
+            @test_reference "refs/1792865.json" content_str
         end
     end
 end
@@ -31,7 +33,12 @@ end
             @test true
         else
             @test length(result) == 2
-            @test all(x -> occursin(".json", x), result)
+            for path in result
+                id = parse(Int, split(basename(path), ".")[1])
+                content = JSON3.read(read(path, String))
+                content_str = JSON3.pretty(JSON3.write(content))
+                @test_reference "refs/$(id).json" content_str
+            end
         end
     end
 end
