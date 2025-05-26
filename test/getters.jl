@@ -9,9 +9,9 @@
     end
 end
 
-@testset "get_cohort_definition (single ID)" begin
+@testset "download_cohort_definition (single ID)" begin
     @testset "recorded single ID download" begin
-        result = playback(() -> get_cohort_definition(1792865; progress_bar=true, metadata_check=true), "cohort_definition_1792865.bson")
+        result = playback(() -> download_cohort_definition(1792865; progress_bar=true, metadata=""), "cohort_definition_1792865.bson")
         if length(result) == 0
             @info "Result was empty - possibly skipped due to metadata check"
             @test true  
@@ -22,10 +22,10 @@ end
     end
 end
 
-@testset "get_cohort_definition (multiple IDs)" begin
+@testset "download_cohort_definition (multiple IDs)" begin
     @testset "recorded multi ID download" begin
         ids = [1792956, 1790632]
-        result = playback(() -> get_cohort_definition(ids; progress_bar=true, metadata_check=true), "cohort_definitions_multiple.bson")
+        result = playback(() -> download_cohort_definition(ids; progress_bar=true, metadata=""), "cohort_definitions_multiple.bson")
         if length(result) == 0
             @info "Result was empty - possibly all cohorts skipped due to metadata"
             @test true

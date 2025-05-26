@@ -3,7 +3,7 @@ using Test
 
 import OHDSIAPI: 
     get_cohortdefinition_version, 
-    get_cohort_definition
+    download_cohort_definition
 
 import BrokenRecord: 
     configure!,

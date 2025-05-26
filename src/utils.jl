@@ -85,13 +85,13 @@ function _save_cohort_json(
 end
 
 """
-    download_cohort_definition(IDs; metadata::Union{String,Nothing}="./data/cohorts/cohort_information.json", output_dir::String=pwd())
+    download_cohort_definition(IDs; metadata_check::Bool = true, output_dir::String = pwd())
 
 Minimal version of cohort definition downloader. Skips verbose output and progress bar.
 
 # Arguments
 - `IDs`: Integer or iterable of cohort IDs.
-- `metadata`: Metadata file path (default is `./data/cohorts/cohort_information.json`). If `""`, no metadata check or save is performed.
+- `metadata_check`: If true, saves to `./data/cohorts/cohort_information.json`. If false, no metadata file is used.
 - `output_dir`: Directory to save cohort files.
 
 # Returns
@@ -99,80 +99,20 @@ Minimal version of cohort definition downloader. Skips verbose output and progre
 """
 function download_cohort_definition(
     IDs;
-    metadata::Union{String,Nothing} = "./data/cohorts/cohort_information.json",
+    metadata_check::Bool = true,
     output_dir::String = pwd()
 )
-    metadata_path = metadata == "" ? nothing : metadata
-    metadata_dict = metadata_path !== nothing && isfile(metadata_path) ?
-        JSON3.read(read(metadata_path, String), Dict{String, Any}) :
-        Dict{String, Any}()
-
-    ids = unique(typeof(IDs) <: Integer ? [IDs] : IDs)
-    download_ids = Int[]
-
-    for id in ids
-        cohort_resp = get_cohortdefinition(id)
-        if cohort_resp.status != 200
-            continue
-        end
-
-        cohort_json = JSON3.read(String(cohort_resp.body))
-        if !haskey(cohort_json, "modifiedDate")
-            continue
-        end
-
-        ms = cohort_json["modifiedDate"]
-        date = Dates.unix2datetime(ms ÷ 1000)
-        last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
-
-        if metadata_path !== nothing && haskey(metadata_dict, string(id)) &&
-           metadata_dict[string(id)]["lastModified"] == last_modified
-            continue 
-        end
-
-        push!(download_ids, id)
-    end
-
-    download_paths = String[]
-
-    for id in download_ids
-        try
-            cohort_resp = get_cohortdefinition(id)
-            cohort_json = JSON3.read(String(cohort_resp.body))
-            if !haskey(cohort_json, "modifiedDate")
-                continue
-            end
-
-            ms = cohort_json["modifiedDate"]
-            date = Dates.unix2datetime(ms ÷ 1000)
-            last_modified = Dates.format(date, "yyyy-mm-ddTHH:MM:SS")
-
-            version_resp = get_cohortdefinition_version(id)
-            versions = JSON3.read(String(version_resp.body))
-            latest_version = maximum(x -> x["version"], versions)
-
-            path = _save_cohort_json(id, cohort_json, output_dir)
-
-            if metadata_path !== nothing
-                _write_metadata_entry!(metadata_dict, id, latest_version, last_modified)
-            end
-
-            push!(download_paths, path)
-        catch
-            continue
-        end
-    end
-
-    if metadata_path !== nothing
-        mkpath(dirname(metadata_path))
-        _save_metadata(metadata_dict, metadata_path)
-    end
-
-    return download_paths
+    metadata_path = metadata_check ? "./data/cohorts/cohort_information.json" : ""
+    return _download_cohort_definition(IDs;
+        progress_bar=false,
+        verbose=false,
+        metadata=metadata_path,
+        output_dir=output_dir
+    )
 end
 
 """
-    download_cohort_definition(IDs; progress_bar::Bool=true, verbose::Bool=true, metadata::Union{String,Nothing}="./data/cohorts/cohort_information.json", output_dir::String=pwd())
+    download_cohort_definition(IDs; progress_bar::Bool = true, verbose::Bool = true, metadata::Union{String,Nothing} = "./data/cohorts/cohort_information.json", output_dir::String = pwd())
 
 Verbose version of the cohort downloader with progress bar and logging.
 
@@ -192,6 +132,41 @@ function download_cohort_definition(
     verbose::Bool = true,
     metadata::Union{String,Nothing} = "./data/cohorts/cohort_information.json",
     output_dir::String = pwd()
+)
+    return _download_cohort_definition(IDs;
+        progress_bar=progress_bar,
+        verbose=verbose,
+        metadata=metadata,
+        output_dir=output_dir
+    )
+end
+
+"""
+    _download_cohort_definition(IDs; progress_bar::Bool, verbose::Bool, metadata::Union{String,Nothing}, output_dir::String)
+
+This is an internal implementation for downloading cohort definitions from OHDSI WebAPI.
+It handles metadata validation, logging, and optional progress bar display.
+
+It is **invoked by both public dispatches** of `download_cohort_definition`, one minimal and one verbose.
+
+### Arguments
+
+- `IDs`: Integer or iterable of cohort definition IDs.
+- `progress_bar::Bool`: Whether to show a progress bar during downloads.
+- `verbose::Bool`: Whether to print logging messages.
+- `metadata::Union{String,Nothing}`: Path to metadata JSON file. If `""`, disables metadata logic.
+- `output_dir::String`: Directory to store cohort JSON files.
+
+### Returns
+
+- A vector of file paths to successfully downloaded cohort definition JSONs.
+"""
+function _download_cohort_definition(
+    IDs;
+    progress_bar::Bool,
+    verbose::Bool,
+    metadata::Union{String,Nothing},
+    output_dir::String
 )
     metadata_path = metadata == "" ? nothing : metadata
     metadata_dict = metadata_path !== nothing && isfile(metadata_path) ?
@@ -242,15 +217,13 @@ function download_cohort_definition(
         end
     end
 
-    p = (progress_bar && !isempty(download_ids)) ?
-    Progress(
+    p = (progress_bar && !isempty(download_ids)) ? Progress(
         length(download_ids);
         dt=0.1,
         barglyphs=BarGlyphs("[=> ]"),
         barlen=40,
         color=:yellow
-    ) :
-    nothing
+    ) : nothing
 
     download_paths = String[]
 
@@ -273,7 +246,9 @@ function download_cohort_definition(
             latest_version = maximum(x -> x["version"], versions)
 
             path = _save_cohort_json(id, cohort_json, output_dir)
-            _write_metadata_entry!(metadata_dict, id, latest_version, last_modified)
+            if metadata_path !== nothing
+                _write_metadata_entry!(metadata_dict, id, latest_version, last_modified)
+            end
             push!(download_paths, path)
 
             if verbose
