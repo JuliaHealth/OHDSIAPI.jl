@@ -85,36 +85,10 @@ function _save_cohort_json(
 end
 
 """
-    download_cohort_definition(IDs; metadata_check::Bool = true, output_dir::String = pwd())
+    download_cohort_definition(IDs; progress_bar::Bool = true, verbose::Bool = true, metadata::Union{String,Nothing} = "cohort_information.json", output_dir::String = pwd())
 
-Minimal version of cohort definition downloader. Skips verbose output and progress bar.
-
-# Arguments
-- `IDs`: Integer or iterable of cohort IDs.
-- `metadata_check`: If true, saves to `./data/cohorts/cohort_information.json`. If false, no metadata file is used.
-- `output_dir`: Directory to save cohort files.
-
-# Returns
-- Vector of downloaded cohort JSON paths.
-"""
-function download_cohort_definition(
-    IDs;
-    metadata_check::Bool = true,
-    output_dir::String = pwd()
-)
-    metadata_path = metadata_check ? "./data/cohorts/cohort_information.json" : ""
-    return _download_cohort_definition(IDs;
-        progress_bar=false,
-        verbose=false,
-        metadata=metadata_path,
-        output_dir=output_dir
-    )
-end
-
-"""
-    download_cohort_definition(IDs; progress_bar::Bool = true, verbose::Bool = true, metadata::Union{String,Nothing} = "./data/cohorts/cohort_information.json", output_dir::String = pwd())
-
-Verbose version of the cohort downloader with progress bar and logging.
+TODO: Add docstring
+TODO: Combine this function with the _download_cohort_definition
 
 # Arguments
 - `IDs`: Integer or iterable of cohort IDs.
@@ -130,7 +104,7 @@ function download_cohort_definition(
     IDs;
     progress_bar::Bool = true,
     verbose::Bool = true,
-    metadata::Union{String,Nothing} = "./data/cohorts/cohort_information.json",
+    metadata::Union{String,Nothing} = "cohort_information.json",
     output_dir::String = pwd()
 )
     return _download_cohort_definition(IDs;
