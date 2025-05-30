@@ -87,41 +87,8 @@ end
 """
     download_cohort_definition(IDs; progress_bar::Bool = true, verbose::Bool = true, metadata::Union{String,Nothing} = "cohort_information.json", output_dir::String = pwd())
 
-TODO: Add docstring
-TODO: Combine this function with the _download_cohort_definition
-
-# Arguments
-- `IDs`: Integer or iterable of cohort IDs.
-- `progress_bar`: Show progress bar.
-- `verbose`: Show `@info` messages.
-- `metadata`: Metadata file path. If `""`, skip metadata check and saving.
-- `output_dir`: Directory to save downloaded JSON files.
-
-# Returns
-- Vector of downloaded cohort JSON paths.
-"""
-function download_cohort_definition(
-    IDs;
-    progress_bar::Bool = true,
-    verbose::Bool = true,
-    metadata::Union{String,Nothing} = "cohort_information.json",
-    output_dir::String = pwd()
-)
-    return _download_cohort_definition(IDs;
-        progress_bar=progress_bar,
-        verbose=verbose,
-        metadata=metadata,
-        output_dir=output_dir
-    )
-end
-
-"""
-    _download_cohort_definition(IDs; progress_bar::Bool, verbose::Bool, metadata::Union{String,Nothing}, output_dir::String)
-
-This is an internal implementation for downloading cohort definitions from OHDSI WebAPI.
-It handles metadata validation, logging, and optional progress bar display.
-
-It is **invoked by both public dispatches** of `download_cohort_definition`, one minimal and one verbose.
+Download cohort definitions from an OHDSI WebAPI instance. This function handles downloading cohort definitions,
+tracking metadata about downloaded cohorts, and only re-downloading when updates are available.
 
 ### Arguments
 
@@ -134,13 +101,34 @@ It is **invoked by both public dispatches** of `download_cohort_definition`, one
 ### Returns
 
 - A vector of file paths to successfully downloaded cohort definition JSONs.
+
+### Examples
+
+Download a single cohort definition:
+
+```julia-repl
+julia> cohort_files = download_cohort_definition(1792956)
+```
+
+Download multiple cohorts with custom options:
+
+```julia-repl
+julia> cohort_ids = [1792956, 1790632]
+julia> cohort_files = download_cohort_definition(
+           cohort_ids,
+           progress_bar=true,
+           verbose=true,
+           metadata="my_metadata.json",
+           output_dir="./cohorts"
+       )
+```
 """
-function _download_cohort_definition(
+function download_cohort_definition(
     IDs;
-    progress_bar::Bool,
-    verbose::Bool,
-    metadata::Union{String,Nothing},
-    output_dir::String
+    progress_bar::Bool = true,
+    verbose::Bool = true,
+    metadata::Union{String,Nothing} = "cohort_information.json",
+    output_dir::String = pwd()
 )
     metadata_path = metadata == "" ? nothing : metadata
     metadata_dict = metadata_path !== nothing && isfile(metadata_path) ?
