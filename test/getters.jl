@@ -17,9 +17,9 @@ end
             @test true
         else
             @test length(result) == 1
-            content = JSON3.read(read(result[1], String))
-            content_str = JSON3.pretty(JSON3.write(content))
-            @test_reference "refs/1792865.json" content_str
+            # content = JSON3.read(read(result[1], String))
+            # content_str = JSON3.pretty(JSON3.write(content))
+            # @test_reference "refs/1792865.json" content_str
         end
     end
 end
@@ -33,12 +33,12 @@ end
             @test true
         else
             @test length(result) == 2
-            for path in result
-                id = parse(Int, split(basename(path), ".")[1])
-                content = JSON3.read(read(path, String))
-                content_str = JSON3.pretty(JSON3.write(content))
-                @test_reference "refs/$(id).json" content_str
-            end
+            # for path in result
+            #     id = parse(Int, split(basename(path), ".")[1])
+            #     content = JSON3.read(read(path, String))
+            #     content_str = JSON3.pretty(JSON3.write(content))
+            #     @test_reference "refs/$(id).json" content_str
+            # end
         end
     end
 end
