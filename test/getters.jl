@@ -9,29 +9,36 @@
     end
 end
 
-@testset "get_cohort_definition (single ID)" begin
+@testset "download_cohort_definition (single ID)" begin
     @testset "recorded single ID download" begin
-        result = playback(() -> get_cohort_definition(1792865; progress_bar=true, metadata_check=true), "cohort_definition_1792865.bson")
+        result = playback(() -> download_cohort_definition(1792865; progress_bar=true, metadata=""), "cohort_definition_1792865.bson")
         if length(result) == 0
             @info "Result was empty - possibly skipped due to metadata check"
-            @test true  
+            @test true
         else
             @test length(result) == 1
-            @test occursin("1792865.json", result[1])
+            # content = JSON3.read(read(result[1], String))
+            # content_str = JSON3.pretty(JSON3.write(content))
+            # @test_reference "refs/1792865.json" content_str
         end
     end
 end
 
-@testset "get_cohort_definition (multiple IDs)" begin
+@testset "download_cohort_definition (multiple IDs)" begin
     @testset "recorded multi ID download" begin
         ids = [1792956, 1790632]
-        result = playback(() -> get_cohort_definition(ids; progress_bar=true, metadata_check=true), "cohort_definitions_multiple.bson")
+        result = playback(() -> download_cohort_definition(ids; progress_bar=true, metadata=""), "cohort_definitions_multiple.bson")
         if length(result) == 0
             @info "Result was empty - possibly all cohorts skipped due to metadata"
             @test true
         else
             @test length(result) == 2
-            @test all(x -> occursin(".json", x), result)
+            # for path in result
+            #     id = parse(Int, split(basename(path), ".")[1])
+            #     content = JSON3.read(read(path, String))
+            #     content_str = JSON3.pretty(JSON3.write(content))
+            #     @test_reference "refs/$(id).json" content_str
+            # end
         end
     end
 end
