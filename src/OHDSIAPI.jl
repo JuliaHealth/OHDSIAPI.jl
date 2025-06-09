@@ -9,5 +9,6 @@ BASE_URL = "https://atlas-demo.ohdsi.org/WebAPI/"
 
 include("get.jl")
 include("utils.jl")
+include("downloaders.jl")
 
 end
