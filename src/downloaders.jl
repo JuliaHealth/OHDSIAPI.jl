@@ -222,5 +222,48 @@ function download_concept_set(
     return !isempty(paths) ? paths : download_paths 
 end
 
+function download_cohort_definition_sql(
+    definition; 
+    output = joinpath(pwd(), "definition.sql"),
+    vocabulary_database_schema = "vocab_schema", 
+    cdm_database_schema = "cdm_schema",
+    target_database_schema = "target_schema",
+    target_cohort_table = "target_table",
+    target_cohort_id = "1",
+    targetdialect = "postgresql"
+)
+    try 
+        definition = read(definition, String)
+    catch e 
+        nothing
+    end
+
+    res = post_cohortdefinition_sql(definition)
+    res = JSON3.read(res.body)
+    res = res.templateSql
+
+    body = Dict(
+        "oracleTempSchema" => "temp_schema",
+        "parameters" => Dict(
+            "vocabulary_database_schema" => vocabulary_database_schema, 
+            "cdm_database_schema" => cdm_database_schema,
+            "target_database_schema" => target_database_schema,
+            "target_cohort_table" => target_cohort_table,
+            "target_cohort_id" => target_cohort_id
+        ),
+        "targetdialect" => targetdialect,
+        "SQL" => res
+    )
+
+    res = post_sqlrender_translate(JSON3.write(body))
+    res = JSON3.read(res.body)
+    res = res.targetSQL
+
+    write(output, res)
+    @info "Downloaded SQL definition to: $(abspath(output))"
+
+end
+
 export download_cohort_definition
+export download_cohort_definition_sql
 export download_concept_set
