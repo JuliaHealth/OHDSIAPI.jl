@@ -7,6 +7,7 @@
     queries
     body
     output
+    consumes
 end
 
 @kwdef struct GENERATED_FUNCTION
