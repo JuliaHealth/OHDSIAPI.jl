@@ -57,6 +57,9 @@ function build_code!(body, func)
     body_flag = !isnothing(func.body)
     if func.method == "GET"
         body = _build_getter_code!(body, func, query_flag, args_flag, body_flag)
+    elseif func.method == "POST"
+        body_flag = true
+        body = _build_post_code!(body, func, query_flag, args_flag, body_flag)
     end
     body *= """\nend"""
 end
@@ -92,6 +95,47 @@ function _build_getter_code!(body, func, query_flag, args_flag, body_flag)
     body *=
     """
         HTTP.get(joinpath(BASE_URL, url_stub))
+    """
+
+    return body
+end
+
+function _build_post_code!(body, func, query_flag, args_flag, body_flag)
+    body *= 
+        """\n
+            url_stub = "$(func.url[2:end])"
+        """
+    if args_flag == true 
+        args = [a.arg_name for a in func.args]
+        arg_dict = """
+            args = Dict(
+        """
+        for arg in args
+            arg_dict *= 
+            """
+                    \"$(arg)\" => $arg,
+            """
+        end
+        arg_dict *= 
+        """
+            )\n
+        """
+        body *= arg_dict
+        body *= 
+        """
+            for arg in keys(args)
+                url_stub = replace(url_stub, "{" * arg * "}" => args[arg])
+            end
+        """
+    end
+    body *=
+    """
+        res = HTTP.post(
+            joinpath(BASE_URL, url_stub), 
+            Dict("Content-Type" => "$(isempty(func.consumes) ? "" : func.consumes[1])"); 
+            body = body
+        )
+        
     """
 
     return body

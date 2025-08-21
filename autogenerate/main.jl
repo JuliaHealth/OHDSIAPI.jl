@@ -3,10 +3,10 @@ using Downloads
 using JSON3
 using NodeJS
 
-includet("constants.jl")
+include("constants.jl")
 includet("download.jl")
-includet("function_builders.jl")
-includet("getters.jl")
+include("function_builders.jl")
+include("getters.jl")
 
 ends = JSON3.read("data/endpoints.json");
 ends = ends[Not(findall(x -> x.title == "DO NOT USE", ends)), :];
@@ -20,12 +20,12 @@ for e in ends
         args = get_arguments(e),
         queries = get_queries(e),
         body = get_body(e),
-        output = get_output(e)
+        output = get_output(e),
+        consumes = e.consumes
     )
     push!(FUNC_DICT[e.http], func)
 end
 
-# TODO: Iterate through each method type via keys first
 for func in FUNC_DICT["GET"]
     docstring = """\"\"\""""
     docstring *= build_header!(docstring, func)
@@ -44,6 +44,31 @@ for func in FUNC_DICT["GET"]
     func = build_code!(func_code, func)
     
     push!(GENERATED_FUNCTIONS["GET"], 
+        GENERATED_FUNCTION(
+            docstring,
+            func
+        )
+    )
+end
+
+for func in FUNC_DICT["POST"]
+    docstring = """\"\"\""""
+    docstring *= build_header!(docstring, func)
+    docstring *= func.description
+    docstring = build_arguments!(docstring, func)
+
+    if func.method != "DELETE"
+        if hasproperty(func.output, :comment) && !isnothing(func.output.comment) && !isempty(func.output.comment)
+            docstring *= "\n\n# Returns"
+            docstring *= "\n\n- $(func.output.comment)"
+        end
+    end
+
+    docstring = build_footer!(docstring, func)
+    func_code = """\n\n"""
+    func = build_code!(func_code, func)
+    
+    push!(GENERATED_FUNCTIONS["POST"], 
         GENERATED_FUNCTION(
             docstring,
             func
